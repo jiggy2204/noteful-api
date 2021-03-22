@@ -40,9 +40,7 @@ foldersRouter
       .then((folder) => {
         res
           .status(201)
-          .location(
-            path.posix.join(req.originalUrl, `api/folders/${folder.id}`)
-          )
+          .location(path.posix.join(req.originalUrl, `/${folder.id}`))
           .json(serializeFolder(folder));
       })
       .catch(next);
@@ -51,14 +49,14 @@ foldersRouter
 //ROUTER FOR '/api/folders/:folderId'
 
 foldersRouter
-  .route("/api/folders/:folderId")
+  .route("/api/folders/:id")
   .get((req, res, next) => {
     const knexInstance = req.app.get("db");
 
-    FoldersService.getById(knexInstance, req.params.folderId)
+    FoldersService.getById(knexInstance, req.params.id)
       .then((folder) => {
         if (!folder) {
-          return res.status(400).json({
+          return res.status(404).json({
             error: { message: `Folder does not exist` },
           });
         }
@@ -67,7 +65,7 @@ foldersRouter
       .catch(next);
   })
   .delete((req, res, next) => {
-    FoldersService.deleteFolder(req.app.get("db"), req.params.folderId)
+    FoldersService.deleteFolder(req.app.get("db"), req.params.id)
       .then((numRowsAffected) => {
         res.status(204).end();
       })
@@ -87,7 +85,7 @@ foldersRouter
 
     FoldersService.updateFolder(
       req.app.get("db"),
-      req.params.folderId,
+      req.params.id,
       folderToUpdate
     )
       .then((numRowsAffected) => {

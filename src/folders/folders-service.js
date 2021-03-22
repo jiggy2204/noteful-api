@@ -1,5 +1,8 @@
+const knex = require("knex");
+
 const FoldersService = {
   getAllFolders(knex) {
+    console.log(knex.select("*").from("folders"));
     return knex.select("*").from("folders");
   },
 
