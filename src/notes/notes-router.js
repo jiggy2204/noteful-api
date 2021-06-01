@@ -43,7 +43,7 @@ notesRouter
       .then((note) => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, `api/notes/${note.id}`))
+          .location(path.posix.join(req.originalUrl, `/${note.id}`))
           .json(serializeNote(note));
       })
       .catch(next);

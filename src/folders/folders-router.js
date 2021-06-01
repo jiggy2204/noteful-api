@@ -20,7 +20,7 @@ foldersRouter
 
     FoldersService.getAllFolders(knexInstance)
       .then((folders) => {
-        res.json(folders.map(serializeFolder));
+        res.status(200).json(folders.map(serializeFolder));
       })
       .catch(next);
   })
