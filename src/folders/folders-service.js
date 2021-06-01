@@ -2,13 +2,12 @@ const knex = require("knex");
 
 const FoldersService = {
   getAllFolders(knex) {
-    console.log(knex.select("*").from("folders"));
     return knex.select("*").from("folders");
   },
 
-  insertFolder(knex, newNote) {
+  insertFolder(knex, newFolder) {
     return knex
-      .insert(newNote)
+      .insert(newFolder)
       .into("folders")
       .returning("*")
       .then((rows) => {
@@ -24,8 +23,8 @@ const FoldersService = {
     return knex("folders").where({ id }).delete();
   },
 
-  updateFolder(knex, id, newNoteFields) {
-    return knex("folders").where({ id }).update(newNoteFields);
+  updateFolder(knex, id, newFolderFields) {
+    return knex("folders").where({ id }).update(newFolderFields);
   },
 };
 

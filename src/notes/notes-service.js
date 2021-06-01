@@ -1,3 +1,5 @@
+const xss = require("xss");
+
 const NotesService = {
   getAllNotes(knex) {
     return knex.select("*").from("notes");

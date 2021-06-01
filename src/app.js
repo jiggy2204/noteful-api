@@ -21,17 +21,17 @@ app.use("/api/folders", foldersRouter);
 app.use("/api/notes", notesRouter);
 
 //GET root page, send back 'Hello, world!' on web page
-app.get("/", (req, res) => {
-  res.send("Hello, world!");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello, world!");
+// });
 
-app.get("/api/folders", (req, res) => {
-  console.log(res.send("Retrieved folders"));
-});
+// app.get("/api/folders", (req, res) => {
+//   console.log(res.send("Retrieved folders"));
+// });
 
-app.get("/api/notes", (req, res) => {
-  console.log(res.send("Retrieved notes"));
-});
+// app.get("/api/notes", (req, res) => {
+//   console.log(res.send("Retrieved notes"));
+// });
 
 //Hide error message from users and outsiders
 app.use(function errorHandler(error, req, res, next) {
