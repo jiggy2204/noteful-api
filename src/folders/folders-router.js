@@ -49,7 +49,7 @@ foldersRouter
 //ROUTER FOR '/api/folders/:folderId'
 
 foldersRouter
-  .route("/api/folders/:id")
+  .route("/:id")
   .get((req, res, next) => {
     const knexInstance = req.app.get("db");
 

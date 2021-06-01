@@ -51,7 +51,7 @@ notesRouter
 
 //ROUTER FOR NOTE ID '/api/notes/:noteId'
 notesRouter
-  .route("/api/notes/:noteId")
+  .route("/:noteId")
   .get((req, res, next) => {
     const knexInstance = req.app.get("db");
 
