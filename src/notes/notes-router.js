@@ -8,88 +8,97 @@ const jsonParser = express.json();
 
 const serializeNote = (note) => ({
   id: note.id,
-  name: xss(note.name),
-  modified: note.modified,
-  folderId: note.folderId,
+  title: xss(note.title),
+  date_modified: note.date_modified,
   content: xss(note.content),
+  folder_id: note.folder_id,
 });
-
-//ROUTER FOR BASE '/'
 
 notesRouter
   .route("/")
   .get((req, res, next) => {
-    const knexInstance = req.app.get("db");
-
-    NotesService.getAllNotes(knexInstance)
-      .then((notes) => {
-        res.json(notes.map(serializeNote));
-      })
+    const db = req.app.get("db");
+    NotesService.getAllNotes(db)
+      .then((notes) => res.status(200).json(notes.map(serializeNote)))
       .catch(next);
   })
   .post(jsonParser, (req, res, next) => {
-    const { name, content } = req.body;
-    const newNote = { name, content };
+    const { title, content, folder_id } = req.body;
+    const newNote = { title, content, folder_id };
+    const db = req.app.get("db");
 
-    for (const [key, value] of Object.entries(newFolder)) {
-      if (value === null) {
-        return res.status(400).json({
-          error: { message: `Missing '${key}' in request body` },
-        });
-      }
+    if (!title) {
+      return res.status(400).json({ error: { message: "Title is required" } });
+    }
+    if (!content) {
+      return res
+        .status(400)
+        .json({ error: { message: "Content is required" } });
+    }
+    if (!folder_id) {
+      return res.status(400).json({ error: { message: "Folder is required" } });
     }
 
-    NotesService.insertNote(req.app.get("db"), newNote)
+    NotesService.insertNote(db, newNote)
       .then((note) => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, `/${note.id}`))
+          .location(path.posix.join(req.originalUrl, `/${note.Id}`))
           .json(serializeNote(note));
       })
       .catch(next);
   });
 
-//ROUTER FOR NOTE ID '/api/notes/:noteId'
 notesRouter
-  .route("/:noteId")
-  .get((req, res, next) => {
-    const knexInstance = req.app.get("db");
+  .route("/:note_id")
+  .all((req, res, next) => {
+    const db = req.app.get("db");
+    const id = req.params.note_id;
 
-    NotesService.getById(knexInstance, req.params.noteId)
+    NotesService.getNoteById(db, id)
       .then((note) => {
         if (!note) {
-          return res.status(400).json({
-            error: { message: `Folder does not exist` },
-          });
+          return res
+            .status(404)
+            .json({ error: { message: `Note doesn't exist` } });
         }
-        res.json(serializeNote(note));
+        res.note = note;
+        next();
       })
       .catch(next);
   })
+  .get((req, res, next) => {
+    res.status(200).json(serializeNote(res.note));
+  })
   .delete((req, res, next) => {
-    NotesService.deleteNote(req.app.get("db"), req.params.noteId)
+    const db = req.app.get("db");
+    const id = req.params.note_id;
+
+    NotesService.deleteNote(db, id)
       .then((numRowsAffected) => {
         res.status(204).end();
       })
       .catch(next);
   })
   .patch(jsonParser, (req, res, next) => {
-    const { name, content } = req.body;
-    const noteToUpdate = { name, content };
+    const { text, date_noted } = req.body;
+    const noteToUpdate = { text, date_noted };
 
     const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
-
     if (numberOfValues === 0) {
-      return res.status(400).json({
-        error: { message: `Request body must contain 'name' and 'content'.` },
-      });
+      return res
+        .status(400)
+        .json({
+          error: {
+            message: `Request body must contain either text or date_noted'`,
+          },
+        });
     }
 
-    NotesService.updateNote(
-      req.app.get("db"),
-      req.params.folderId,
-      noteToUpdate
-    )
+    const db = req.app.get("db");
+    const id = req.params.note_id;
+
+    NotesService.updateNote(db, id, noteToUpdate)
       .then((numRowsAffected) => {
         res.status(204).end();
       })

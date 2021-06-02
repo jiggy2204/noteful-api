@@ -8,35 +8,28 @@ const jsonParser = express.json();
 
 const serializeFolder = (folder) => ({
   id: folder.id,
-  name: xss(folder.name),
+  folder_name: xss(folder.folder_name),
 });
-
-//API FOR BASE '/'
 
 foldersRouter
   .route("/")
   .get((req, res, next) => {
-    const knexInstance = req.app.get("db");
-
-    FoldersService.getAllFolders(knexInstance)
-      .then((folders) => {
-        res.status(200).json(folders.map(serializeFolder));
-      })
+    const db = req.app.get("db");
+    FoldersService.getAllFolders(db)
+      .then((folders) => res.status(200).json(folders.map(serializeFolder)))
       .catch(next);
   })
   .post(jsonParser, (req, res, next) => {
-    const { name } = req.body;
-    const newFolder = { name };
+    const { folder_name } = req.body;
+    const newFolder = { folder_name };
+    const db = req.app.get("db");
 
-    for (const [key, value] of Object.entries(newFolder)) {
-      if (value === null) {
-        return res.status(400).json({
-          error: { message: `Missing '${key}' in request body` },
-        });
-      }
+    if (!folder_name) {
+      return res
+        .status(400)
+        .json({ error: { message: "Folder name is required" } });
     }
-
-    FoldersService.insertFolder(req.app.get("db"), newFolder)
+    FoldersService.insertFolder(db, newFolder)
       .then((folder) => {
         res
           .status(201)
@@ -46,48 +39,49 @@ foldersRouter
       .catch(next);
   });
 
-//ROUTER FOR '/api/folders/:folderId'
-
 foldersRouter
-  .route("/:id")
-  .get((req, res, next) => {
-    const knexInstance = req.app.get("db");
-
-    FoldersService.getById(knexInstance, req.params.id)
+  .route("/:folder_id")
+  .all((req, res, next) => {
+    const db = req.app.get("db");
+    const id = req.params.folder_id;
+    FoldersService.getFolderById(db, id)
       .then((folder) => {
         if (!folder) {
-          return res.status(404).json({
-            error: { message: `Folder does not exist` },
-          });
+          return res
+            .status(404)
+            .json({ error: { message: "Folder does not exist" } });
         }
-        res.json(serializeFolder(folder));
+        res.folder = folder;
+        next();
       })
       .catch(next);
   })
+  .get((req, res, next) => {
+    res.status(200).json(serializeFolder(res.folder));
+  })
   .delete((req, res, next) => {
-    FoldersService.deleteFolder(req.app.get("db"), req.params.id)
+    const db = req.app.get("db");
+    const id = req.params.folderId;
+
+    FoldersService.deleteFolder(db, id)
       .then((numRowsAffected) => {
         res.status(204).end();
       })
       .catch(next);
   })
   .patch(jsonParser, (req, res, next) => {
-    const { name } = req.body;
-    const folderToUpdate = { name };
+    const { folder_name } = req.body;
+    const folderToUpdate = { folder_name };
+    const db = req.app.get("db");
+    const id = req.params.folder_id;
 
     const numberOfValues = Object.values(folderToUpdate).filter(Boolean).length;
-
     if (numberOfValues === 0) {
-      return res.status(400).json({
-        error: { message: `Request body must contain a 'name'.` },
-      });
+      return res
+        .status(400)
+        .json({ error: { message: "Request body must include folder name" } });
     }
-
-    FoldersService.updateFolder(
-      req.app.get("db"),
-      req.params.id,
-      folderToUpdate
-    )
+    FoldersService.updateFolder(db, id, folderToUpdate)
       .then((numRowsAffected) => {
         res.status(204).end();
       })
