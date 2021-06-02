@@ -86,13 +86,11 @@ notesRouter
 
     const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
     if (numberOfValues === 0) {
-      return res
-        .status(400)
-        .json({
-          error: {
-            message: `Request body must contain either text or date_noted'`,
-          },
-        });
+      return res.status(400).json({
+        error: {
+          message: `Request body must contain either text or date_noted'`,
+        },
+      });
     }
 
     const db = req.app.get("db");

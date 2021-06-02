@@ -16,7 +16,7 @@ foldersRouter
   .get((req, res, next) => {
     const db = req.app.get("db");
     FoldersService.getAllFolders(db)
-      .then((folders) => res.status(200).json(folders.map(serializeFolder)))
+      .then((folders) => res.json(folders.map(serializeFolder)))
       .catch(next);
   })
   .post(jsonParser, (req, res, next) => {
@@ -29,6 +29,7 @@ foldersRouter
         .status(400)
         .json({ error: { message: "Folder name is required" } });
     }
+
     FoldersService.insertFolder(db, newFolder)
       .then((folder) => {
         res
