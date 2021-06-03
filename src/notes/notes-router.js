@@ -8,7 +8,7 @@ const jsonParser = express.json();
 
 const serializeNote = (note) => ({
   id: note.id,
-  title: xss(note.title),
+  note_name: xss(note.note_name),
   date_modified: note.date_modified,
   content: xss(note.content),
   folder_id: note.folder_id,
@@ -19,31 +19,27 @@ notesRouter
   .get((req, res, next) => {
     const db = req.app.get("db");
     NotesService.getAllNotes(db)
-      .then((notes) => res.status(200).json(notes.map(serializeNote)))
+      .then((notes) => res.json(notes.map(serializeNote)))
       .catch(next);
   })
   .post(jsonParser, (req, res, next) => {
-    const { title, content, folder_id } = req.body;
-    const newNote = { title, content, folder_id };
+    const { note_name, content, folder_id } = req.body;
+    const newNote = { note_name, content, folder_id };
     const db = req.app.get("db");
 
-    if (!title) {
-      return res.status(400).json({ error: { message: "Title is required" } });
-    }
-    if (!content) {
-      return res
-        .status(400)
-        .json({ error: { message: "Content is required" } });
-    }
-    if (!folder_id) {
-      return res.status(400).json({ error: { message: "Folder is required" } });
+    for (const [key, value] of Object.entries(newNote)) {
+      if (value == null) {
+        return res.status(400).json({
+          error: { message: `Missing ${key} in request body` },
+        });
+      }
     }
 
     NotesService.insertNote(db, newNote)
       .then((note) => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, `/notes/${note.Id}`))
+          .location(path.posix.join(req.originalUrl + `/notes/${note.Id}`))
           .json(serializeNote(note));
       })
       .catch(next);
@@ -68,7 +64,7 @@ notesRouter
       .catch(next);
   })
   .get((req, res, next) => {
-    res.status(200).json(serializeNote(res.note));
+    res.json(serializeNote(res.note));
   })
   .delete((req, res, next) => {
     const db = req.app.get("db");

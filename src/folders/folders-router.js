@@ -24,17 +24,19 @@ foldersRouter
     const newFolder = { folder_name };
     const db = req.app.get("db");
 
-    if (!folder_name) {
-      return res
-        .status(400)
-        .json({ error: { message: "Folder name is required" } });
+    for (const [key, value] of Object.entries(newFolder)) {
+      if (value == null) {
+        return res.status(400).json({
+          error: { message: `Missing ${key} in request body` },
+        });
+      }
     }
 
     FoldersService.insertFolder(db, newFolder)
       .then((folder) => {
         res
           .status(201)
-          .location(path.posix.join(req.originalUrl, `/folders/${folder.id}`))
+          .location(path.posix.join(req.originalUrl + `/folders/${folder.id}`))
           .json(serializeFolder(folder));
       })
       .catch(next);
@@ -45,6 +47,7 @@ foldersRouter
   .all((req, res, next) => {
     const db = req.app.get("db");
     const id = req.params.folder_id;
+
     FoldersService.getFolderById(db, id)
       .then((folder) => {
         if (!folder) {
@@ -58,7 +61,7 @@ foldersRouter
       .catch(next);
   })
   .get((req, res, next) => {
-    res.status(200).json(serializeFolder(res.folder));
+    res.json(serializeFolder(res.folder));
   })
   .delete((req, res, next) => {
     const db = req.app.get("db");
